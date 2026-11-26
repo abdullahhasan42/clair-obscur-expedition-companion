@@ -344,6 +344,9 @@ class TitleView extends ItemView {
 	async onClose() {
 		this.teardown();
 		this.contentEl.empty();
+		if (this.plugin) {
+			window.setTimeout(() => this.plugin.syncBodyState(), 0);
+		}
 	}
 	teardown() {
 		if (this.ambience) {
@@ -365,6 +368,7 @@ class TitleView extends ItemView {
 		root.addClass("cop-title-root");
 		root.setAttribute("data-world", this.world());
 		root.setAttribute("data-variant", this.plugin.V.key);
+		this.plugin.syncBodyState();
 
 		const scene = root.createDiv({ cls: "cop-scene", attr: { "aria-hidden": "true" } });
 		const drawSvg = () => {
@@ -497,6 +501,8 @@ function makePlugin(V) {
 			this.addCommand({ id: "cycle-world", name: "Switch world", callback: () => this.cycleWorld() });
 
 			this.registerEvent(this.app.workspace.on("layout-change", () => this.onLayout()));
+			this.registerEvent(this.app.workspace.on("layout-change", () => this.syncBodyState()));
+			this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.syncBodyState()));
 			this.registerEvent(this.app.workspace.on("css-change", () => this.refresh()));
 			this.registerEvent(this.app.workspace.on("file-open", (file) => this.onFileOpen(file)));
 			this.registerEvent(this.app.workspace.on("editor-change", () => this.onTyping()));
@@ -514,6 +520,9 @@ function makePlugin(V) {
 				}
 			});
 			this.bodyWatch.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+			// modals are appended to the body; the HUD dims while one is open (a class instead of :has())
+			this.modalWatch = new MutationObserver(() => this.syncBodyState());
+			this.modalWatch.observe(document.body, { childList: true });
 
 			this.setVaultVars();
 			this.syncIdle();
@@ -548,6 +557,9 @@ function makePlugin(V) {
 			if (this.bodyWatch) {
 				this.bodyWatch.disconnect();
 			}
+			if (this.modalWatch) {
+				this.modalWatch.disconnect();
+			}
 			if (this.saveWrapped) {
 				const { save, original } = this.saveWrapped;
 				for (const key of Object.keys(original)) {
@@ -555,7 +567,7 @@ function makePlugin(V) {
 				}
 				this.saveWrapped = null;
 			}
-			document.body.classList.remove("cop-idle", "cop-typing");
+			document.body.classList.remove("cop-idle", "cop-typing", "cop-modal-open", "cop-title-active");
 			if (V.hooks && V.hooks.unload) {
 				V.hooks.unload(this);
 			}
@@ -602,6 +614,10 @@ function makePlugin(V) {
 		titleName() {
 			const text = (this.settings.title || "").trim();
 			return text || this.app.vault.getName();
+		}
+		syncBodyState() {
+			document.body.classList.toggle("cop-modal-open", !!document.querySelector(".modal-container"));
+			document.body.classList.toggle("cop-title-active", !!document.querySelector(".workspace-leaf.mod-active .cop-title-root"));
 		}
 		syncIdle() {
 			const idle = document.hidden || !document.hasFocus();
@@ -1936,6 +1952,7 @@ function diamondMenu(view, host, groups) {
 	const plugin = view.plugin;
 	const entries = plugin.entries();
 	const layout = menuLayout();
+	host.toggleClass("has-row", layout === "row");
 	const caption = host.createDiv({ cls: "cop-dm-caption" });
 	const capName = caption.createDiv({ cls: "cop-dm-caption-name" });
 	const capDesc = caption.createDiv({ cls: "cop-dm-caption-desc" });
@@ -2022,6 +2039,7 @@ function expeditionMenu(view, frame) {
 	const n = plugin.entries().length;
 	const host = root.createDiv({ cls: "cop-dm-host is-e33" });
 	if (bodyHas("co-e33-right")) {
+		host.addClass("no-left");
 		diamondMenu(view, host, [{ count: n, side: 1, cls: "is-right" }]);
 	} else {
 		const left = Math.ceil(n / 2);

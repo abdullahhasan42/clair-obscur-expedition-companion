@@ -3,7 +3,7 @@
 <p align="center">
 <a href="https://github.com/abdullahhasan42/clair-obscur-expedition-33-theme"><img src="https://img.shields.io/badge/Get_the-Clair_Obscur_theme-c8963c" alt="Get the theme"></a>
 <img src="https://img.shields.io/badge/version-1.0.0-d6283a" alt="Version 1.0.0">
-<img src="https://img.shields.io/badge/Obsidian-1.5%2B-7c3aed" alt="Obsidian 1.5+">
+<img src="https://img.shields.io/badge/Obsidian-1.5.8%2B-7c3aed" alt="Obsidian 1.5.8+">
 <img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="MIT license">
 </p>
 
