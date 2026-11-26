@@ -40,7 +40,9 @@ jobs:
             for (const k of ["id", "name", "version", "minAppVersion", "description", "author"]) {
               if (!m[k]) { console.error("manifest.json is missing " + k); process.exit(1); }
             }
-            if (/obsidian/i.test(m.id)) { console.error("The plugin id must not contain \"obsidian\""); process.exit(1); }
+            if (!/^[a-z-]+$/.test(m.id)) { console.error("The plugin id may only contain lowercase letters and hyphens (no digits): " + m.id); process.exit(1); }
+            if (/obsidian/i.test(m.id) || /plugin$/.test(m.id)) { console.error("The plugin id must not contain \"obsidian\" or end with \"plugin\""); process.exit(1); }
+            if (/obsidian/i.test(m.name) || /\bplugin\b/i.test(m.name)) { console.error("The plugin name must not contain \"Obsidian\" or \"Plugin\""); process.exit(1); }
             if (!v[m.version]) { console.error("versions.json has no entry for " + m.version); process.exit(1); }
           '
 
